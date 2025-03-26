@@ -8,12 +8,14 @@ An AI-powered platform tackling Zero Hunger (SDG 2) and No Poverty (SDG 1) by co
 - **Firebase**: For backend services like authentication and database.
 
 1. **Clone the Repository**  
+
    Open your terminal and run the following commands:
    ```bash
    git clone <repository-url>
    cd FoodRadar
 
-2. **Install Dependencies**
+3. **Install Dependencies**
+
    Install the required packages by running:
    ```bash
    npm install
