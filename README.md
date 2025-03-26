@@ -14,7 +14,6 @@ An AI-powered platform tackling Zero Hunger (SDG 2) and No Poverty (SDG 1) by co
    cd FoodRadar
 
 2. **Install Dependencies**
-   
    Install the required packages by running:
    ```bash
    npm install
