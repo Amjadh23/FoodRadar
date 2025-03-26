@@ -5,5 +5,6 @@ export default function RootLayout() {
     <Stack.Screen name="menuUtama" options={{ headerShown: false }}/>
     <Stack.Screen name="dashboard" options={{ headerShown: false }}/>
     <Stack.Screen name="NearbyCampaigns" options={{ headerShown: false }}/>
+    <Stack.Screen name="MapScreen" />
   </Stack>;
 }

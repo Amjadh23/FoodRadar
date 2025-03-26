@@ -13,6 +13,7 @@ export default function Index() {
       <Text>Edit app/index.tsx to edit this screen.</Text>
       <Link href={'/menuUtama'}>menuUtama</Link>
       <Link href={'/dashboard'}>dashboard</Link>
+      <Link href={'/MapScreen'}>map</Link>
     </View>
   );
 }
