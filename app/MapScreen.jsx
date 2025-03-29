@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Text, ScrollView } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Text, ScrollView, Animated } from "react-native";
 import MapView, { Marker, Circle, PROVIDER_OSM, Callout, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
-import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import { MaterialIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { db } from "../config/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { useRouter } from "expo-router";
@@ -15,6 +15,7 @@ export default function MapScreen() {
   const [routeDistance, setRouteDistance] = useState(null);
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const mapRef = useRef(null);
   const router = useRouter();
 
@@ -143,6 +144,7 @@ export default function MapScreen() {
     
     // Set selected campaign
     setSelectedCampaign(campaign);
+    setIsBottomSheetExpanded(false); // Start with the bottom sheet collapsed
     
     // Calculate distance in kilometers
     const distance = calculateDistance(
@@ -180,6 +182,12 @@ export default function MapScreen() {
     setRouteDistance(null);
     setEstimatedTime(null);
     setSelectedCampaign(null);
+    setIsBottomSheetExpanded(false);
+  };
+
+  // Toggle bottom sheet expansion
+  const toggleBottomSheet = () => {
+    setIsBottomSheetExpanded(!isBottomSheetExpanded);
   };
 
   const getCampaignIcon = (type) => {
@@ -322,83 +330,104 @@ export default function MapScreen() {
             <MaterialIcons name="my-location" size={24} color="#FF6B8B" />
           </TouchableOpacity>
 
-          {/* Combined Route and Campaign Information Card */}
-          {selectedCampaign && (
-            <View style={styles.infoCardContainer}>
-              {/* Route Information Section */}
-              <View style={styles.routeCard}>
-                <Text style={styles.routeTitle}>Route Information</Text>
-                <View style={styles.routeInfoContainer}>
-                  <View style={styles.routeInfoItem}>
-                    <MaterialIcons name="directions" size={20} color="#FF6B8B" />
-                    <Text style={styles.routeInfoLabel}>Distance</Text>
-                    <Text style={styles.routeInfoValue}>{routeDistance} km</Text>
-                  </View>
-                  <View style={styles.routeInfoItem}>
-                    <MaterialIcons name="access-time" size={20} color="#FF6B8B" />
-                    <Text style={styles.routeInfoLabel}>Est. Time</Text>
-                    <Text style={styles.routeInfoValue}>{estimatedTime}</Text>
-                  </View>
+          {/* Route Information Card (Small, Always Visible when route is selected) */}
+          {selectedRoute && (
+            <View style={styles.routeCardSmall}>
+              <View style={styles.routeInfoContainer}>
+                <View style={styles.routeInfoItem}>
+                  <MaterialIcons name="directions" size={20} color="#FF6B8B" />
+                  <Text style={styles.routeInfoValue}>{routeDistance} km</Text>
                 </View>
-              </View>
-
-              {/* Campaign Details Section */}
-              <View style={styles.campaignCard}>
-                <Text style={styles.campaignCardTitle}>Campaign Details</Text>
-                <View style={styles.campaignTypeContainer}>
-                  {getCampaignIcon(selectedCampaign.type)}
-                  <Text style={styles.campaignTypeText}>
-                    {getCampaignTypeLabel(selectedCampaign.type)}
-                  </Text>
+                <View style={styles.routeInfoItem}>
+                  <MaterialIcons name="access-time" size={20} color="#FF6B8B" />
+                  <Text style={styles.routeInfoValue}>{estimatedTime}</Text>
                 </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Name:</Text>
-                  <Text style={styles.detailValue}>{selectedCampaign.title}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Address:</Text>
-                  <Text style={styles.detailValue}>{selectedCampaign.address}</Text>
-                </View>
-                
-                {selectedCampaign.description && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Description:</Text>
-                    <Text style={styles.detailValue}>{selectedCampaign.description}</Text>
-                  </View>
-                )}
-                
-                {selectedCampaign.createdAt && (
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Created:</Text>
-                    <Text style={styles.detailValue}>{formatDate(selectedCampaign.createdAt)}</Text>
-                  </View>
-                )}
-                
-                {selectedCampaign.status && (
-                  <View style={styles.statusContainer}>
-                    <Text style={[
-                      styles.statusText, 
-                      { color: selectedCampaign.status === 'active' ? '#4CAF50' : '#FF6B8B' }
-                    ]}>
-                      {selectedCampaign.status === 'active' ? 'Active' : 'Inactive'}
-                    </Text>
-                  </View>
-                )}
-                
                 <TouchableOpacity 
-                  style={styles.clearButton} 
-                  onPress={clearRoute}
+                  style={styles.expandButton} 
+                  onPress={toggleBottomSheet}
                 >
-                  <Text style={styles.clearButtonText}>Close Details</Text>
+                  <Ionicons 
+                    name={isBottomSheetExpanded ? "chevron-down" : "chevron-up"} 
+                    size={20} 
+                    color="#FF6B8B" 
+                  />
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
+          {/* Bottom Sheet for Campaign Details (Expandable) */}
+          {selectedCampaign && (
+            <View style={[
+              styles.bottomSheet, 
+              isBottomSheetExpanded ? styles.bottomSheetExpanded : styles.bottomSheetCollapsed
+            ]}>
+              {isBottomSheetExpanded && (
+                <ScrollView style={styles.bottomSheetContent}>
+                  <View style={styles.handleContainer}>
+                    <View style={styles.handle} />
+                  </View>
+                  
+                  <Text style={styles.campaignCardTitle}>Campaign Details</Text>
+                  
+                  <View style={styles.campaignTypeContainer}>
+                    {getCampaignIcon(selectedCampaign.type)}
+                    <Text style={styles.campaignTypeText}>
+                      {getCampaignTypeLabel(selectedCampaign.type)}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Name:</Text>
+                    <Text style={styles.detailValue}>{selectedCampaign.title}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Address:</Text>
+                    <Text style={styles.detailValue}>{selectedCampaign.address}</Text>
+                  </View>
+                  
+                  {selectedCampaign.description && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Description:</Text>
+                      <Text style={styles.detailValue}>{selectedCampaign.description}</Text>
+                    </View>
+                  )}
+                  
+                  {selectedCampaign.createdAt && (
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Created:</Text>
+                      <Text style={styles.detailValue}>{formatDate(selectedCampaign.createdAt)}</Text>
+                    </View>
+                  )}
+                  
+                  {selectedCampaign.status && (
+                    <View style={styles.statusContainer}>
+                      <Text style={[
+                        styles.statusText, 
+                        { color: selectedCampaign.status === 'active' ? '#4CAF50' : '#FF6B8B' }
+                      ]}>
+                        {selectedCampaign.status === 'active' ? 'Active' : 'Inactive'}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  <TouchableOpacity 
+                    style={styles.clearButton} 
+                    onPress={clearRoute}
+                  >
+                    <Text style={styles.clearButtonText}>Close Details</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              )}
+            </View>
+          )}
+
           {/* Legend */}
-          <View style={styles.legend}>
+          <View style={[
+            styles.legend, 
+            selectedRoute ? styles.legendWithRoute : null
+          ]}>
             <Text style={styles.legendTitle}>Campaign Types</Text>
             <View style={styles.legendItem}>
               <View style={styles.legendIconContainer}>
@@ -680,5 +709,64 @@ const styles = StyleSheet.create({
     color: '#FF6B8B',
     fontWeight: '600',
     fontSize: 14,
+  },
+  routeCardSmall: {
+    position: 'absolute',
+    top: 32,
+    left: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 12,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  expandButton: {
+    backgroundColor: '#FFF0F3',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bottomSheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  bottomSheetCollapsed: {
+    bottom: -5, // Slightly visible to show there's more content
+    height: 5,
+  },
+  bottomSheetExpanded: {
+    bottom: 0,
+    maxHeight: '60%',
+  },
+  bottomSheetContent: {
+    padding: 16,
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  handle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#DDD',
+    borderRadius: 3,
+  },
+  legendWithRoute: {
+    bottom: 80, // Move the legend up if there's a route display active
   },
 });
