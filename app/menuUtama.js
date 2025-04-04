@@ -6,6 +6,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { useRouter } from 'expo-router';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import LocationPicker from './LocationPicker';
+import { useSearchParams } from "expo-router/build/hooks";
 
 const THEME_COLOR = '#FF6B8B';
 const BACKGROUND_COLOR = '#F5F7FA';
@@ -21,11 +22,16 @@ export default function CreateCampaign() {
   const [location, setLocation] = useState(null);
   const [type, setType] = useState(null);
   const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [items, setItems] = useState([
     { label: "Infaq", value: "infaq" },
     { label: "Sumbangan", value: "sumbangan" },
   ]);
+
+  const params = useSearchParams()
+  const ngoName = JSON.parse(params.get('userName'))
 
   const router = useRouter();
 
@@ -56,6 +62,7 @@ export default function CreateCampaign() {
           longitude: Number(location.longitude)
         },
         type,
+        ngoName: ngoName,
         createdAt: new Date(),
         status: 'active'
       };
@@ -65,7 +72,7 @@ export default function CreateCampaign() {
       await addDoc(collection(db, "Kempen"), campaignData);
 
       Alert.alert("Success", "Campaign created successfully!");
-      router.replace('./dashboard');
+      router.replace('./NgoDashboard');
     } catch (error) {
       console.error("Error adding document: ", error);
       Alert.alert("Error", "Failed to create campaign. Please try again.");
@@ -109,7 +116,7 @@ export default function CreateCampaign() {
                 style={styles.input}
                 placeholder="Enter a meaningful title"
                 value={title}
-                onChangeText={setTitle}
+                onChangeText={(text) => setTitle(text)}
                 placeholderTextColor={TEXT_SECONDARY}
               />
             </View>
@@ -122,7 +129,7 @@ export default function CreateCampaign() {
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe your campaign's purpose and goals"
                 value={description}
-                onChangeText={setDescription}
+                onChangeText={(text) => setDescription(text)}
                 multiline
                 numberOfLines={4}
                 placeholderTextColor={TEXT_SECONDARY}
@@ -137,7 +144,7 @@ export default function CreateCampaign() {
                 style={styles.input}
                 placeholder="Enter address"
                 value={address}
-                onChangeText={setAddress}
+                onChangeText={(text) => setAddress(text)}
                 placeholderTextColor={TEXT_SECONDARY}
               />
             </View>

@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
-import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { db } from "./../config/firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -100,6 +100,11 @@ export default function Dashboard() {
                     <MaterialIcons name="category" size={16} color="#666" />
                     <Text style={styles.infoText}>{kempen.type}</Text>
                   </View>
+                  <View style={styles.infoRow}>
+                    <FontAwesome name="info-circle" size={16} color="#666" />
+                    <Text style={styles.infoText}> {'Prepare by '}{kempen.ngoName ? kempen.ngoName : ''} </Text>
+                  </View>
+
                 </View>
                 <View style={styles.campaignFooter}>
                   <View style={styles.statusBadge}>

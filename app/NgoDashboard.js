@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
-import { getDoc, doc } from 'firebase/firestore';
-import { auth, db } from './../config/firebase'; // Make sure this path is correct
+import { auth, db } from './../config/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function MainMenu() {
   const router = useRouter();
@@ -35,44 +35,25 @@ export default function MainMenu() {
 
   const menuItems = [
     {
-      title: 'Find Food',
-      icon: <MaterialIcons name="restaurant" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/MapScreen'),
-      description: 'Find nearby food distribution areas'
-    },
-    {
-      title: 'NGO Registration',
-      icon: <MaterialIcons name="people" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/NGORegistration'),
-      description: 'Register your NGO organization'
-    },
-    {
       title: 'Create Campaign',
       icon: <MaterialIcons name="campaign" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/menuUtama'),
-      description: 'Create a new food distribution campaign'
-    },
-    {
-      title: 'Dashboard',
-      icon: <MaterialIcons name="dashboard" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/dashboard'),
-      description: 'View your campaigns and statistics'
-    },
-    {
-      title: 'Chatbot',
-      icon: <FontAwesome5 name="robot" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/Chatbot'),
-      description: 'Get help and information about food distribution'
+      onPress: () => router.push({
+        pathname: './menuUtama',
+        params: {
+          userName: encodeURIComponent(JSON.stringify(userData.nama))
+        },
+      }),
+      description: 'Create a new food distribution campaign',
     }
   ];
 
   const FoodRadarLogo = () => (
     <View style={styles.logoContainer}>
       <View style={styles.logoIconContainer}>
-        <FontAwesome5 name="utensils" size={28} color="#FF6B8B" />
+        <MaterialIcons name="restaurant" size={28} color="#FF6B8B" />
       </View>
       <Text style={styles.logoText}>
-        Food<Text style={{color: '#FF6B8B'}}>Radar</Text>
+        Food<Text style={{ color: '#FF6B8B' }}>Radar</Text>
       </Text>
     </View>
   );
@@ -81,9 +62,11 @@ export default function MainMenu() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <FoodRadarLogo />
-        <Text style={styles.subtitle}>Welcome, {userData ? userData.nama : 'Guest'}</Text>
+        <Text style={styles.subtitle}>
+          {userData ? `Welcome, ${userData.nama}` : 'Connect with food distribution points'}
+        </Text>
       </View>
-      
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.menuGrid}>
           {menuItems.map((item, index) => (
@@ -121,62 +104,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   logoIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFF0F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+    backgroundColor: '#FFE1E8',
+    borderRadius: 12,
+    padding: 8,
+    marginRight: 8,
   },
   logoText: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#333',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
+    color: '#888',
+    marginTop: 4,
   },
   scrollView: {
     flex: 1,
   },
   menuGrid: {
-    flexDirection: 'column',
-    marginBottom: 24,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   menuItem: {
-    backgroundColor: '#fff',
+    width: '100%',
+    backgroundColor: '#F9F9F9',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#FFF0F3',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
     backgroundColor: '#FFF0F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+    borderRadius: 12,
+    padding: 10,
+    alignSelf: 'flex-start',
+    marginBottom: 10,
   },
   menuTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#333',
-    marginBottom: 8,
   },
   menuDescription: {
     fontSize: 14,
     color: '#666',
-    lineHeight: 20,
+    marginTop: 4,
   },
 });

@@ -1,5 +1,5 @@
-import MainMenu from './MainMenu';
+import Login from './Login';
 
 export default function Index() {
-  return <MainMenu />;
+  return <Login />;
 }
