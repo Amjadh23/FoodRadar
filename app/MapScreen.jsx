@@ -492,11 +492,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   campaignMarker: {
-    backgroundColor: '#FFF0F3',
+    /*backgroundColor: '#FFF0F3',
     padding: 8,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#FF6B8B',
+    borderColor: '#FF6B8B',*/
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -504,11 +504,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   iconBg: {
-    backgroundColor: '#FFF0F3',
-    padding: 8,
-    borderRadius: 12,
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    //backgroundColor: '#FFF0F3',
+    borderRadius: 32,
   },
   gpsButton: {
     position: "absolute",
