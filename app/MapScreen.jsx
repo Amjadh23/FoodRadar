@@ -101,8 +101,8 @@ export default function MapScreen() {
       mapRef.current.animateToRegion({
         latitude: userLocation.coords.latitude,
         longitude: userLocation.coords.longitude,
-        latitudeDelta: 0.004,
-        longitudeDelta: 0.004,
+        latitudeDelta: 0.002,
+        longitudeDelta: 0.002,
       });
     }
   };
@@ -256,14 +256,23 @@ export default function MapScreen() {
             provider={PROVIDER_OSM}
             style={styles.map}
             initialRegion={{
-              latitude: 37.4219980,
-              longitude: -122.0840000,
-              latitudeDelta: 0.004,
-              longitudeDelta: 0.004,
+              latitude: location?.latitude || 3.139003, // Default to KL coordinates if location not available yet
+              longitude: location?.longitude || 101.686855,
+              latitudeDelta: 0.002,
+              longitudeDelta: 0.002,
             }}
             onMapReady={() => {
               console.log("Map is ready");
               console.log("Current campaigns:", campaigns);
+              // Immediately center on user location when map is ready
+              if (location) {
+                mapRef.current?.animateToRegion({
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  latitudeDelta: 0.002,
+                  longitudeDelta: 0.002,
+                });
+              }
             }}
           >
             {location && (
@@ -271,7 +280,7 @@ export default function MapScreen() {
                 {/* User's Current Location Marker */}
                 <Marker coordinate={{ latitude: location.latitude, longitude: location.longitude }}>
                   <View style={styles.userMarker}>
-                    <MaterialIcons name="my-location" size={24} color="#FF6B8B" />
+                    <MaterialIcons name="location-pin" size={36} color="#FF6B8B" />
                   </View>
                 </Marker>
 
@@ -471,11 +480,11 @@ const styles = StyleSheet.create({
     alignItems: "center" 
   },
   userMarker: {
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#FF6B8B',
+    //backgroundColor: '#fff',
+    //padding: 8,
+    //borderRadius: 16,
+    //borderWidth: 2,
+    //borderColor: '#FF6B8B',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
