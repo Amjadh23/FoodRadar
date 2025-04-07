@@ -17,6 +17,7 @@ export default function MapScreen() {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
   const [isLegendVisible, setIsLegendVisible] = useState(false);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
   const mapRef = useRef(null);
   const router = useRouter();
 
@@ -139,13 +140,47 @@ export default function MapScreen() {
     }
   };
 
+  // Function to fetch route coordinates from OSRM
+  const getRouteCoordinates = async (start, end) => {
+    try {
+      // Use driving-car profile for better road routing
+      const response = await fetch(
+        `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson&annotations=true&steps=true`
+      );
+      const data = await response.json();
+      
+      if (data.routes && data.routes[0]) {
+        const route = data.routes[0];
+        // Convert GeoJSON coordinates to the format expected by react-native-maps
+        const coordinates = route.geometry.coordinates.map(coord => ({
+          latitude: coord[1],
+          longitude: coord[0]
+        }));
+
+        // Ensure exact start and end points are included
+        const exactCoordinates = [
+          start,
+          ...coordinates,
+          end
+        ];
+        
+        return exactCoordinates;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching route:', error);
+      // Fallback to direct line if routing fails
+      return [start, end];
+    }
+  };
+
   // Function to show route when marker is clicked
-  const showRoute = (campaign) => {
+  const showRoute = async (campaign) => {
     if (!location) return;
     
     // Set selected campaign
     setSelectedCampaign(campaign);
-    setIsBottomSheetExpanded(false); // Start with the bottom sheet collapsed
+    setIsBottomSheetExpanded(false);
     
     // Calculate distance in kilometers
     const distance = calculateDistance(
@@ -159,21 +194,33 @@ export default function MapScreen() {
     // Calculate estimated travel time
     setEstimatedTime(calculateTravelTime(distance));
     
-    // Set selected route
-    setSelectedRoute({
-      origin: { latitude: location.latitude, longitude: location.longitude },
-      destination: { latitude: campaign.location.latitude, longitude: campaign.location.longitude },
-    });
+    // Get route coordinates from OSRM
+    const start = { 
+      latitude: location.latitude, 
+      longitude: location.longitude 
+    };
+    const end = { 
+      latitude: campaign.location.latitude, 
+      longitude: campaign.location.longitude 
+    };
     
-    // Fit map to show route
-    if (mapRef.current) {
-      mapRef.current.fitToCoordinates(
-        [
-          { latitude: location.latitude, longitude: location.longitude },
-          { latitude: campaign.location.latitude, longitude: campaign.location.longitude }
-        ],
-        { edgePadding: { top: 100, right: 100, bottom: 100, left: 100 }, animated: true }
-      );
+    const coordinates = await getRouteCoordinates(start, end);
+    
+    if (coordinates) {
+      setRouteCoordinates(coordinates);
+      // Set selected route
+      setSelectedRoute({
+        origin: start,
+        destination: end,
+      });
+      
+      // Fit map to show route with more padding for better visibility
+      if (mapRef.current) {
+        mapRef.current.fitToCoordinates(coordinates, {
+          edgePadding: { top: 150, right: 150, bottom: 150, left: 150 },
+          animated: true
+        });
+      }
     }
   };
 
@@ -183,6 +230,7 @@ export default function MapScreen() {
     setRouteDistance(null);
     setEstimatedTime(null);
     setSelectedCampaign(null);
+    setRouteCoordinates([]);
     setIsBottomSheetExpanded(false);
   };
 
@@ -323,15 +371,26 @@ export default function MapScreen() {
 
             {/* Route Line */}
             {selectedRoute && (
-              <Polyline
-                coordinates={[
-                  selectedRoute.origin,
-                  selectedRoute.destination
-                ]}
-                strokeWidth={3}
-                strokeColor="#FF6B8B"
-                lineDashPattern={[1]}
-              />
+              <>
+                {/* Route outline for better visibility */}
+                <Polyline
+                  coordinates={routeCoordinates}
+                  strokeWidth={8}
+                  strokeColor="rgba(255, 107, 139, 0.3)"
+                  zIndex={0}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+                {/* Main route line */}
+                <Polyline
+                  coordinates={routeCoordinates}
+                  strokeWidth={6}
+                  strokeColor="#FF6B8B"
+                  zIndex={1}
+                  lineCap="round"
+                  lineJoin="round"
+                />
+              </>
             )}
           </MapView>
 
@@ -378,55 +437,69 @@ export default function MapScreen() {
                     <View style={styles.handle} />
                   </View>
                   
-                  <Text style={styles.campaignCardTitle}>Campaign Details</Text>
-                  
-                  <View style={styles.campaignTypeContainer}>
-                    {getCampaignIcon(selectedCampaign.type)}
-                    <Text style={styles.campaignTypeText}>
-                      {getCampaignTypeLabel(selectedCampaign.type)}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Name:</Text>
-                    <Text style={styles.detailValue}>{selectedCampaign.title}</Text>
-                  </View>
-                  
-                  <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Address:</Text>
-                    <Text style={styles.detailValue}>{selectedCampaign.address}</Text>
-                  </View>
-                  
-                  {selectedCampaign.description && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Description:</Text>
-                      <Text style={styles.detailValue}>{selectedCampaign.description}</Text>
+                  <View style={styles.campaignHeader}>
+                    <View style={styles.campaignIconLarge}>
+                      {getCampaignIcon(selectedCampaign.type)}
                     </View>
-                  )}
-                  
-                  {selectedCampaign.createdAt && (
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Created:</Text>
-                      <Text style={styles.detailValue}>{formatDate(selectedCampaign.createdAt)}</Text>
-                    </View>
-                  )}
-                  
-                  {selectedCampaign.status && (
-                    <View style={styles.statusContainer}>
-                      <Text style={[
-                        styles.statusText, 
-                        { color: selectedCampaign.status === 'active' ? '#4CAF50' : '#FF6B8B' }
+                    <Text style={styles.campaignCardTitle}>{selectedCampaign.title}</Text>
+                    {selectedCampaign.status && (
+                      <View style={[
+                        styles.statusBadge,
+                        { backgroundColor: selectedCampaign.status === 'active' ? '#E7F6E9' : '#FFE8EC' }
                       ]}>
-                        {selectedCampaign.status === 'active' ? 'Active' : 'Inactive'}
-                      </Text>
+                        <Text style={[
+                          styles.statusText,
+                          { color: selectedCampaign.status === 'active' ? '#4CAF50' : '#FF6B8B' }
+                        ]}>
+                          {selectedCampaign.status === 'active' ? '● Active' : '● Inactive'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.infoSection}>
+                    <View style={styles.infoRow}>
+                      <MaterialIcons name="location-on" size={24} color="#FF6B8B" />
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Location</Text>
+                        <Text style={styles.infoValue}>{selectedCampaign.address}</Text>
+                      </View>
                     </View>
-                  )}
-                  
+
+                    <View style={styles.infoRow}>
+                      <MaterialIcons name="category" size={24} color="#FF6B8B" />
+                      <View style={styles.infoContent}>
+                        <Text style={styles.infoLabel}>Campaign Type</Text>
+                        <Text style={styles.infoValue}>{getCampaignTypeLabel(selectedCampaign.type)}</Text>
+                      </View>
+                    </View>
+
+                    {selectedCampaign.createdAt && (
+                      <View style={styles.infoRow}>
+                        <MaterialIcons name="event" size={24} color="#FF6B8B" />
+                        <View style={styles.infoContent}>
+                          <Text style={styles.infoLabel}>Created On</Text>
+                          <Text style={styles.infoValue}>{formatDate(selectedCampaign.createdAt)}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {selectedCampaign.description && (
+                      <View style={styles.infoRow}>
+                        <MaterialIcons name="description" size={24} color="#FF6B8B" />
+                        <View style={styles.infoContent}>
+                          <Text style={styles.infoLabel}>Description</Text>
+                          <Text style={styles.infoValue}>{selectedCampaign.description}</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
                   <TouchableOpacity 
-                    style={styles.clearButton} 
+                    style={[styles.actionButton, styles.closeButton]}
                     onPress={clearRoute}
                   >
-                    <Text style={styles.clearButtonText}>Close Details</Text>
+                    <Text style={styles.closeButtonText}>Close</Text>
                   </TouchableOpacity>
                 </ScrollView>
               )}
@@ -818,5 +891,83 @@ const styles = StyleSheet.create({
   },
   legendWithRoute: {
     bottom: 80, // Move the legend up if there's a route display active
+  },
+  campaignHeader: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    marginBottom: 16,
+  },
+  campaignIconLarge: {
+    width: 64,
+    height: 64,
+    backgroundColor: '#FFF0F3',
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  campaignCardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 4,
+  },
+  infoSection: {
+    paddingHorizontal: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    backgroundColor: '#FFF0F3',
+    padding: 12,
+    borderRadius: 12,
+  },
+  infoContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  actionButton: {
+    backgroundColor: '#FF6B8B',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  closeButton: {
+    backgroundColor: '#FF6B8B',
+    marginBottom: 32,
+  },
+  closeButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
