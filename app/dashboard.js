@@ -17,7 +17,16 @@ export default function Dashboard() {
 
       const fetchedCampaigns = [];
       result.forEach((kempen) => {
-        fetchedCampaigns.push({ id: kempen.id, ...kempen.data() });
+        const campaignData = { id: kempen.id, ...kempen.data() };
+        // Check if campaign is active based on selectDate
+        if (campaignData.selectDate) {
+          const campaignDate = campaignData.selectDate.toDate();
+          const now = new Date();
+          campaignData.status = campaignDate > now ? 'active' : 'expired';
+        } else {
+          campaignData.status = 'active'; // Default to active if no date set
+        }
+        fetchedCampaigns.push(campaignData);
       });
 
       setListKempen(fetchedCampaigns);
@@ -104,13 +113,28 @@ export default function Dashboard() {
                     <FontAwesome name="info-circle" size={16} color="#666" />
                     <Text style={styles.infoText}> {'Prepare by '}{kempen.ngoName ? kempen.ngoName : ''} </Text>
                   </View>
-
+                  {kempen.selectDate && (
+                    <View style={styles.infoRow}>
+                      <MaterialIcons name="event" size={16} color="#666" />
+                      <Text style={styles.infoText}>
+                        Date: {kempen.selectDate.toDate().toLocaleDateString()}
+                      </Text>
+                    </View>
+                  )}
                 </View>
                 <View style={styles.campaignFooter}>
-                  <View style={styles.statusBadge}>
-                    <Text style={styles.statusText}>Active</Text>
+                  <View style={[
+                    styles.statusBadge,
+                    { backgroundColor: kempen.status === 'active' ? '#E7F6E9' : '#FFE8EC' }
+                  ]}>
+                    <Text style={[
+                      styles.statusText,
+                      { color: kempen.status === 'active' ? '#4CAF50' : '#FF6B8B' }
+                    ]}>
+                      {kempen.status === 'active' ? '● Active' : '● Expired'}
+                    </Text>
                   </View>
-                  <Text style={styles.dateText}>Created: {new Date(kempen.createdAt?.toDate()).toLocaleDateString()}</Text>
+                  {/* <Text style={styles.dateText}>Created: {new Date(kempen.createdAt?.toDate()).toLocaleDateString()}</Text> */}
                 </View>
               </TouchableOpacity>
             ))
