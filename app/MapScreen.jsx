@@ -16,6 +16,7 @@ export default function MapScreen() {
   const [estimatedTime, setEstimatedTime] = useState(null);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [isBottomSheetExpanded, setIsBottomSheetExpanded] = useState(false);
+  const [isLegendVisible, setIsLegendVisible] = useState(false);
   const mapRef = useRef(null);
   const router = useRouter();
 
@@ -432,31 +433,48 @@ export default function MapScreen() {
             </View>
           )}
 
-          {/* Legend */}
-          <View style={[
-            styles.legend, 
-            selectedRoute ? styles.legendWithRoute : null
-          ]}>
-            <Text style={styles.legendTitle}>Campaign Types</Text>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIconContainer}>
-                <FontAwesome5 name="hands-helping" size={16} color="#FF6B8B" />
+          {/* Replace the existing legend with this new button and conditional legend */}
+          <TouchableOpacity 
+            style={styles.legendButton} 
+            onPress={() => setIsLegendVisible(!isLegendVisible)}
+          >
+            <MaterialIcons name="legend-toggle" size={24} color="#FF6B8B" />
+          </TouchableOpacity>
+
+          {isLegendVisible && (
+            <View style={[
+              styles.legend,
+              selectedRoute ? styles.legendWithRoute : null
+            ]}>
+              <View style={styles.legendHeader}>
+                <Text style={styles.legendTitle}>Campaign Types</Text>
+                <TouchableOpacity 
+                  onPress={() => setIsLegendVisible(false)}
+                  style={styles.closeLegendButton}
+                >
+                  <MaterialIcons name="close" size={20} color="#666" />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.legendText}>Infaq</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIconContainer}>
-                <MaterialIcons name="restaurant" size={16} color="#FF6B8B" />
+              <View style={styles.legendItem}>
+                <View style={styles.legendIconContainer}>
+                  <FontAwesome5 name="hands-helping" size={16} color="#FF6B8B" />
+                </View>
+                <Text style={styles.legendText}>Infaq</Text>
               </View>
-              <Text style={styles.legendText}>Sumbangan</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={styles.legendIconContainer}>
-                <MaterialIcons name="campaign" size={16} color="#FF6B8B" />
+              <View style={styles.legendItem}>
+                <View style={styles.legendIconContainer}>
+                  <MaterialIcons name="restaurant" size={16} color="#FF6B8B" />
+                </View>
+                <Text style={styles.legendText}>Sumbangan</Text>
               </View>
-              <Text style={styles.legendText}>Other</Text>
+              <View style={styles.legendItem}>
+                <View style={styles.legendIconContainer}>
+                  <MaterialIcons name="campaign" size={16} color="#FF6B8B" />
+                </View>
+                <Text style={styles.legendText}>Other</Text>
+              </View>
             </View>
-          </View>
+          )}
         </>
       )}
     </View>
@@ -564,11 +582,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  legend: {
+  legendButton: {
     position: 'absolute',
     bottom: 32,
-    left: 32,
     right: 32,
+    backgroundColor: '#FFF0F3',
+    padding: 12,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  legend: {
+    position: 'absolute',
+    bottom: 90, // Positioned above the legend button
+    right: 32,
+    width: 200, // Fixed width for the popup
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
@@ -577,6 +608,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+  },
+  legendHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  closeLegendButton: {
+    padding: 4,
   },
   legendTitle: {
     fontSize: 16,
