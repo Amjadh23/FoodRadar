@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_OSM } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -8,23 +8,56 @@ export default function LocationPicker({ onLocationSelect, onClose, campaignType
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const mapRef = useRef(null);
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Denied", "Location access is required to show your position.");
-        return;
-      }
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert("Permission Denied", "Location access is required to show your position.");
+          return;
+        }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setCurrentLocation(location.coords);
-      setSelectedLocation(location.coords); // Set initial marker at current location
+        let location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High
+        });
+
+        const currentCoords = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        };
+
+        setCurrentLocation(currentCoords);
+        setSelectedLocation(currentCoords);
+
+        // Ensure map is ready and animate to current location
+        if (mapRef.current) {
+          mapRef.current.animateToRegion({
+            ...currentCoords,
+            latitudeDelta: 0.002, // Smaller delta for closer zoom
+            longitudeDelta: 0.002,
+          }, 1000);
+        }
+      } catch (error) {
+        console.error("Error getting location:", error);
+        Alert.alert("Error", "Could not get your current location.");
+      }
     })();
   }, []);
 
+  // Function to handle map ready event
+  const onMapReady = () => {
+    if (currentLocation && mapRef.current) {
+      mapRef.current.animateToRegion({
+        ...currentLocation,
+        latitudeDelta: 0.002,
+        longitudeDelta: 0.002,
+      }, 1000);
+    }
+  };
+
   const handleMapPress = (event) => {
-    // Only set new location if not currently dragging
     if (!isDragging) {
       setSelectedLocation(event.nativeEvent.coordinate);
     }
@@ -37,7 +70,7 @@ export default function LocationPicker({ onLocationSelect, onClose, campaignType
   };
 
   // Campaign marker based on type
-  const getCampaignMarker = () => {
+  const getCampaignIcon = () => {
     return (
       <View style={styles.campaignMarker}>
         {campaignType === 'infaq' ? (
@@ -54,15 +87,19 @@ export default function LocationPicker({ onLocationSelect, onClose, campaignType
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         provider={PROVIDER_OSM}
         style={styles.map}
         initialRegion={{
-          latitude: currentLocation?.latitude || 37.4219980,
-          longitude: currentLocation?.longitude || -122.0840000,
-          latitudeDelta: 0.004,
-          longitudeDelta: 0.004,
+          latitude: 3.139003, // Default to KL coordinates
+          longitude: 101.686855,
+          latitudeDelta: 0.002,
+          longitudeDelta: 0.002,
         }}
+        onMapReady={onMapReady}
         onPress={handleMapPress}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
       >
         {selectedLocation && (
           <Marker
