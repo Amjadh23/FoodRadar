@@ -61,7 +61,7 @@ export default function MainMenu() {
     {
       title: 'Chatbot',
       icon: <FontAwesome5 name="robot" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/Chatbot'),
+      onPress: () => router.push('AIChatbox'),
       description: 'Get help and information about food distribution'
     }
   ];

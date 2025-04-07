@@ -11,5 +11,6 @@ export default function RootLayout() {
     <Stack.Screen name="MainMenu" options={{ headerShown: false }}/>
     <Stack.Screen name="UserRegister" options={{ headerShown: false }}/>
     <Stack.Screen name="MapScreen" />
+    <Stack.Screen name="AIChatbox" options={{ headerShown: false }}/>
   </Stack>;
 }
