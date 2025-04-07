@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, Modal, Image, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, Modal, Image, ScrollView, Button } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { db } from "./../config/firebase";
 import { collection, addDoc } from "firebase/firestore";
@@ -7,6 +7,9 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
 import LocationPicker from './LocationPicker';
 import { useSearchParams } from "expo-router/build/hooks";
+import DateTimePicker from '@react-native-community/datetimepicker'
+import Icon from 'react-native-vector-icons/Feather'
+
 
 const THEME_COLOR = '#FF6B8B';
 const BACKGROUND_COLOR = '#F5F7FA';
@@ -15,20 +18,21 @@ const TEXT_PRIMARY = '#2D3748';
 const TEXT_SECONDARY = '#718096';
 const BORDER_COLOR = '#E2E8F0';
 
-export default function CreateCampaign() {
+export default function menuUtama() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState(null);
   const [type, setType] = useState(null);
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [items, setItems] = useState([
     { label: "Infaq", value: "infaq" },
     { label: "Sumbangan", value: "sumbangan" },
   ]);
+
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
 
   const params = useSearchParams()
   const ngoName = JSON.parse(params.get('userName'))
@@ -41,8 +45,19 @@ export default function CreateCampaign() {
     console.log("Selected location:", selectedLocation);
   };
 
+  const onChange = (event, selectedDate) => {
+    if (event.type === 'dismissed') {
+      setShowPicker(false);
+      return;
+    }
+    if (selectedDate) {
+      setDate(selectedDate);
+      setShowPicker(false);
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!title || !description || !address || !type) {
+    if (!title || !description || !address || !type || !date) {
       Alert.alert("Error", "Please fill out all the required fields.");
       return;
     }
@@ -64,7 +79,8 @@ export default function CreateCampaign() {
         type,
         ngoName: ngoName,
         createdAt: new Date(),
-        status: 'active'
+        status: 'active',
+        selectDate: date
       };
 
       console.log("Saving campaign with data:", campaignData);
@@ -159,6 +175,28 @@ export default function CreateCampaign() {
             </TouchableOpacity>
           </View>
 
+          <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
+            <Text style={styles.label}>Campaign Date</Text>
+            <TouchableOpacity 
+              style={styles.datePickerButton} 
+              onPress={() => setShowPicker(true)}
+            >
+              <Text style={styles.dateText}>
+                {date.toLocaleDateString()}
+              </Text>
+              <MaterialIcons name="calendar-today" size={20} color="#666" />
+            </TouchableOpacity>
+
+            {showPicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                onChange={onChange}
+                minimumDate={new Date()}
+              />
+            )}
+          </View>
+
           <View style={[styles.formGroup, { zIndex: 2 }]}>
             <Text style={styles.label}>Campaign Type</Text>
             <DropDownPicker
@@ -237,6 +275,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 2,
     borderColor: BORDER_COLOR,
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF0F3',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333',
   },
   walletContainer: {
     flexDirection: 'row',
@@ -379,4 +430,13 @@ const styles = StyleSheet.create({
   bottomSpacing: {
     height: 40,
   },
+  input: {
+    width: '80%',
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginVertical: 5,
+    justifyContent: 'center'
+  }
 });

@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
-import { auth, db } from './../config/firebase'; // Make sure this path is correct
+import { auth, db } from './../config/firebase'; 
+import {} from './menuUtama'
 
 export default function MainMenu() {
   const router = useRouter();

@@ -38,9 +38,9 @@ export default function MainMenu() {
       title: 'Create Campaign',
       icon: <MaterialIcons name="campaign" size={32} color="#FF6B8B" />,
       onPress: () => router.push({
-        pathname: './menuUtama',
+        pathname: '/MenuUtama',
         params: {
-          userName: encodeURIComponent(JSON.stringify(userData.nama))
+          userName: encodeURIComponent(JSON.stringify(userData?.nama || ''))
         },
       }),
       description: 'Create a new food distribution campaign',
