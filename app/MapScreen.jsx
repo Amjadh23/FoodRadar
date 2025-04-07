@@ -143,7 +143,6 @@ export default function MapScreen() {
   // Function to fetch route coordinates from OSRM
   const getRouteCoordinates = async (start, end) => {
     try {
-      // Use driving-car profile for better road routing
       const response = await fetch(
         `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson&annotations=true&steps=true`
       );
@@ -151,25 +150,21 @@ export default function MapScreen() {
       
       if (data.routes && data.routes[0]) {
         const route = data.routes[0];
-        // Convert GeoJSON coordinates to the format expected by react-native-maps
         const coordinates = route.geometry.coordinates.map(coord => ({
           latitude: coord[1],
           longitude: coord[0]
         }));
 
-        // Ensure exact start and end points are included
-        const exactCoordinates = [
+        // No need for offset since we're using anchor point
+        return [
           start,
           ...coordinates,
           end
         ];
-        
-        return exactCoordinates;
       }
       return null;
     } catch (error) {
       console.error('Error fetching route:', error);
-      // Fallback to direct line if routing fails
       return [start, end];
     }
   };
@@ -243,20 +238,26 @@ export default function MapScreen() {
     switch (type) {
       case 'infaq':
         return (
-          <View style={styles.iconBg}>
-            <FontAwesome5 name="hands-helping" size={24} color="#FF6B8B" />
+          <View style={styles.markerContainer}>
+            <View style={styles.markerCircle}>
+              <FontAwesome5 name="hands-helping" size={16} color="#FF6B8B" />
+            </View>
           </View>
         );
       case 'sumbangan':
         return (
-          <View style={styles.iconBg}>
-            <MaterialIcons name="restaurant" size={24} color="#FF6B8B" />
+          <View style={styles.markerContainer}>
+            <View style={styles.markerCircle}>
+              <MaterialIcons name="restaurant" size={16} color="#FF6B8B" />
+            </View>
           </View>
         );
       default:
         return (
-          <View style={styles.iconBg}>
-            <MaterialIcons name="campaign" size={24} color="#FF6B8B" />
+          <View style={styles.markerContainer}>
+            <View style={styles.markerCircle}>
+              <MaterialIcons name="campaign" size={16} color="#FF6B8B" />
+            </View>
           </View>
         );
     }
@@ -352,6 +353,7 @@ export default function MapScreen() {
                   longitude: campaign.location?.longitude || 101.6869,
                 }}
                 onPress={() => showRoute(campaign)}
+                anchor={{ x: 0.5, y: 0.5 }}
               >
                 <View style={styles.campaignMarker}>
                   {getCampaignIcon(campaign.type)}
@@ -375,7 +377,7 @@ export default function MapScreen() {
                 {/* Route outline for better visibility */}
                 <Polyline
                   coordinates={routeCoordinates}
-                  strokeWidth={8}
+                  strokeWidth={5}
                   strokeColor="rgba(255, 107, 139, 0.3)"
                   zIndex={0}
                   lineCap="round"
@@ -384,7 +386,7 @@ export default function MapScreen() {
                 {/* Main route line */}
                 <Polyline
                   coordinates={routeCoordinates}
-                  strokeWidth={6}
+                  strokeWidth={3}
                   strokeColor="#FF6B8B"
                   zIndex={1}
                   lineCap="round"
@@ -969,5 +971,27 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  markerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 32,
+    padding: 2,
+  },
+  markerCircle: {
+    backgroundColor: '#FFFFFF',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FF6B8B',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
 });
