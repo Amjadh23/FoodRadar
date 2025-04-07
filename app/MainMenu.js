@@ -5,7 +5,6 @@ import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { auth, db } from './../config/firebase'; 
-import {} from './menuUtama'
 
 export default function MainMenu() {
   const router = useRouter();
@@ -44,13 +43,13 @@ export default function MainMenu() {
     {
       title: 'NGO Registration',
       icon: <MaterialIcons name="people" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/NGORegistration'),
+      onPress: () => router.push('/NgoRegistration'),
       description: 'Register your NGO organization'
     },
     {
       title: 'Create Campaign',
       icon: <MaterialIcons name="campaign" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/menuUtama'),
+      onPress: () => router.push('/MenuUtama'),
       description: 'Create a new food distribution campaign'
     },
     {
