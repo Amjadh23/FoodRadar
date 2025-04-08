@@ -9,12 +9,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Image
+  Image,
+  Keyboard,
+  TouchableWithoutFeedback
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GEMINI_API_KEY } from '../config/ai-config';
+import { GEMINI_API_KEY, AI_CONFIG, CONVERSATION_STYLE } from '../config/ai-config';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import * as Location from 'expo-location';
@@ -84,9 +86,9 @@ export default function AIChatbox() {
   const model = genAI.getGenerativeModel({ 
     model: "gemini-1.5-pro-002",
     generationConfig: {
-      temperature: 0.9,
-      topK: 1,
-      topP: 1,
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
       maxOutputTokens: 2048,
     },
   });
@@ -113,10 +115,23 @@ export default function AIChatbox() {
           parts: [{ text: msg.text }],
         }));
 
-      // Create context with app data
-      const context = `You are Ahmad, an AI assistant for the FoodRadar app. Here is the current data about the app:
+      // Create context with app data and conversation style
+      const context = `You are Ahmad, an AI assistant for the FoodRadar app. Please follow these conversation guidelines:
       
-Current Campaigns: ${JSON.stringify(appData?.campaigns || [])}
+Personality: ${CONVERSATION_STYLE.personality}
+Tone: ${CONVERSATION_STYLE.tone}
+Format: ${CONVERSATION_STYLE.responseFormat}
+
+IMPORTANT INSTRUCTIONS:
+1. NEVER use markdown formatting like **bold**, *italic*, or \`code\` in your responses
+2. NEVER use hashtags (#) for headers
+3. NEVER use bullet points with asterisks (*)
+4. Use natural language with proper punctuation
+5. For lists, use numbers (1, 2, 3) or write in complete sentences
+6. Write as if you're having a casual conversation with a friend
+
+Current App Data:
+Campaigns: ${JSON.stringify(appData?.campaigns || [])}
 User Location: ${JSON.stringify(appData?.userLocation || 'Not available')}
 
 You can help users with:
@@ -126,7 +141,7 @@ You can help users with:
 4. Directions and locations
 5. Types of campaigns (Infaq/Sumbangan)
 
-Please provide accurate information based on the available data.`;
+Please provide accurate information based on the available data. Keep your responses natural and conversational, avoiding any markdown formatting or technical language.`;
 
       // Create a chat instance with filtered history and context
       const chat = model.startChat({
@@ -140,8 +155,32 @@ Please provide accurate information based on the available data.`;
       ]);
       const response = await result.response;
       
+      // Process the response to make it more human-like
+      let processedResponse = response.text()
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold markdown
+        .replace(/\*(.*?)\*/g, '$1')     // Remove italic markdown
+        .replace(/`(.*?)`/g, '$1')       // Remove code markdown
+        .replace(/#{1,6}\s/g, '')        // Remove headers
+        .replace(/\[(.*?)\]\((.*?)\)/g, '$1') // Convert links to just text
+        .replace(/\n{3,}/g, '\n\n')      // Remove excessive line breaks
+        .replace(/\*\s/g, '• ')          // Convert asterisk bullets to bullet points
+        .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove excessive line breaks
+        .trim();
+      
+      // Additional processing to ensure no markdown remains
+      processedResponse = processedResponse
+        .replace(/\*\*/g, '')            // Remove any remaining bold markers
+        .replace(/\*/g, '')              // Remove any remaining italic markers
+        .replace(/`/g, '')               // Remove any remaining code markers
+        .replace(/#/g, '')               // Remove any remaining hash markers
+        .replace(/\[/g, '')              // Remove any remaining square brackets
+        .replace(/\]/g, '')              // Remove any remaining square brackets
+        .replace(/\(/g, '')              // Remove any remaining parentheses
+        .replace(/\)/g, '')              // Remove any remaining parentheses
+        .replace(/\n\s*\n\s*\n/g, '\n\n'); // Clean up any remaining excessive line breaks
+      
       const aiMessage = {
-        text: response.text(),
+        text: processedResponse,
         isUser: false,
         timestamp: new Date().toLocaleTimeString(),
       };
@@ -159,99 +198,125 @@ Please provide accurate information based on the available data.`;
     }
   };
 
+  // Add keyboard listener to dismiss keyboard when tapping outside
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      () => {
+        // Scroll to bottom when keyboard appears
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+    
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <View style={styles.headerImageContainer}>
-            <Image
-              source={{ uri: ROBOT_ICON }}
-              style={[styles.headerProfileImage, { tintColor: THEME_COLOR }]}
-            />
-          </View>
-          <View>
-            <Text style={styles.headerTitle}>Ahmad</Text>
-            <Text style={styles.headerSubtitle}>AI Assistant</Text>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 40}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <View style={styles.headerImageContainer}>
+              <Image
+                source={{ uri: ROBOT_ICON }}
+                style={[styles.headerProfileImage, { tintColor: THEME_COLOR }]}
+              />
+            </View>
+            <View>
+              <Text style={styles.headerTitle}>Ahmad</Text>
+              <Text style={styles.headerSubtitle}>AI Assistant</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Chat Messages */}
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-      >
-        {messages.map((message, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageWrapper,
-              message.isUser ? styles.userMessageWrapper : styles.aiMessageWrapper
-            ]}
-          >
-            {!message.isUser && (
-              <View style={styles.messageImageContainer}>
-                <Image
-                  source={{ uri: ROBOT_ICON }}
-                  style={[styles.profileImage, { tintColor: THEME_COLOR }]}
-                />
-              </View>
-            )}
-            <View style={[
-              styles.messageBubble,
-              message.isUser ? styles.userMessage : styles.aiMessage
-            ]}>
-              <Text style={[
-                styles.messageText,
-                message.isUser ? styles.userMessageText : styles.aiMessageText
-              ]}>
-                {message.text}
-              </Text>
-            </View>
-            <Text style={styles.timestamp}>{message.timestamp}</Text>
-          </View>
-        ))}
-        {isLoading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={THEME_COLOR} />
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Input Area */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Type your message..."
-          placeholderTextColor="#999"
-          multiline
-        />
-        <TouchableOpacity
-          style={styles.sendButton}
-          onPress={sendMessage}
-          disabled={!inputText.trim() || isLoading}
+        {/* Chat Messages */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContentContainer}
+          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <MaterialIcons 
-            name="send" 
-            size={24} 
-            color={!inputText.trim() || isLoading ? '#999' : THEME_COLOR} 
+          {messages.map((message, index) => (
+            <View
+              key={index}
+              style={[
+                styles.messageWrapper,
+                message.isUser ? styles.userMessageWrapper : styles.aiMessageWrapper
+              ]}
+            >
+              {!message.isUser && (
+                <View style={styles.messageImageContainer}>
+                  <Image
+                    source={{ uri: ROBOT_ICON }}
+                    style={[styles.profileImage, { tintColor: THEME_COLOR }]}
+                  />
+                </View>
+              )}
+              <View style={[
+                styles.messageBubble,
+                message.isUser ? styles.userMessage : styles.aiMessage
+              ]}>
+                <Text style={[
+                  styles.messageText,
+                  message.isUser ? styles.userMessageText : styles.aiMessageText
+                ]}>
+                  {message.text}
+                </Text>
+              </View>
+              <Text style={styles.timestamp}>{message.timestamp}</Text>
+            </View>
+          ))}
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={THEME_COLOR} />
+            </View>
+          )}
+          {/* Add extra padding at the bottom to ensure content is visible above keyboard */}
+          <View style={{ height: 100 }} />
+        </ScrollView>
+
+        {/* Input Area */}
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Type your message..."
+            placeholderTextColor="#999"
+            multiline
+            maxHeight={100}
           />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={sendMessage}
+            disabled={!inputText.trim() || isLoading}
+          >
+            <MaterialIcons 
+              name="send" 
+              size={24} 
+              color={!inputText.trim() || isLoading ? '#999' : THEME_COLOR} 
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -302,6 +367,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  messagesContentContainer: {
+    paddingBottom: 20,
+  },
   messageWrapper: {
     marginBottom: 16,
     maxWidth: '80%',
@@ -351,6 +419,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    paddingBottom: Platform.OS === 'ios' ? 30 : 16, // Extra padding for iOS
   },
   input: {
     flex: 1,

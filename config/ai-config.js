@@ -5,9 +5,9 @@ export const GEMINI_API_KEY = 'AIzaSyCH_bpKslulR56ttVJ0aCM66P1UEP6dT0o'; // Repl
 // AI Chat Configuration
 export const AI_CONFIG = {
   model: 'gemini-1.0-pro',
-  temperature: 0.9,
-  topK: 1,
-  topP: 1,
+  temperature: 0.7,  // Lower temperature for more consistent responses
+  topK: 40,         // Increased for more natural language variation
+  topP: 0.95,       // Slightly increased for more natural responses
   maxOutputTokens: 2048,
   safetySettings: [
     {
@@ -27,6 +27,28 @@ export const AI_CONFIG = {
       threshold: 'BLOCK_MEDIUM_AND_ABOVE',
     },
   ],
+};
+
+// Add conversation style configuration
+export const CONVERSATION_STYLE = {
+  personality: "friendly and helpful",
+  tone: "casual and conversational",
+  responseFormat: "natural language without any markdown formatting",
+  examples: [
+    "Sure, I can help you with that!",
+    "Let me check that for you.",
+    "I found some information that might help.",
+    "Would you like to know more about this?",
+    "I can guide you through this process."
+  ],
+  formattingRules: [
+    "Never use markdown like **bold** or *italic*",
+    "Never use hashtags (#) for headers",
+    "Never use bullet points with asterisks (*)",
+    "Use natural language with proper punctuation",
+    "For lists, use numbers (1, 2, 3) or write in complete sentences",
+    "Write as if you're having a casual conversation with a friend"
+  ]
 };
 
 import { db } from './../config/firebase'; // Ensure this path is correct
