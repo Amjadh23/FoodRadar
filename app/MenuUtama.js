@@ -169,7 +169,7 @@ export default function menuUtama() {
         )}
       </View>
 
-      <View style={[styles.formGroup, { zIndex: 2 }]}>
+      <View style={styles.formGroup}>
         <Text style={styles.label}>Campaign Type</Text>
         <DropDownPicker
           open={open}
@@ -179,13 +179,55 @@ export default function menuUtama() {
           setValue={setType}
           setItems={setItems}
           placeholder="Select type"
-          style={styles.dropdown}
-          dropDownContainerStyle={styles.dropdownContainer}
-          placeholderStyle={styles.placeholderStyle}
-          textStyle={styles.dropdownText}
-          listItemLabelStyle={styles.dropdownItemText}
-          selectedItemLabelStyle={styles.selectedItemText}
-          zIndex={1000}
+          style={{
+            backgroundColor: '#FFF0F3',
+            borderWidth: 1,
+            borderColor: BORDER_COLOR,
+            borderRadius: 10,
+            minHeight: 50
+          }}
+          containerStyle={{
+            width: '100%'
+          }}
+          dropDownContainerStyle={{
+            backgroundColor: '#FFF0F3',
+            borderWidth: 1,
+            borderColor: BORDER_COLOR,
+            borderRadius: 10,
+            position: 'absolute',
+            top: 50,
+            elevation: 5,
+            zIndex: 2
+          }}
+          placeholderStyle={{
+            fontSize: 15,
+            color: TEXT_SECONDARY,
+            paddingHorizontal: 12
+          }}
+          textStyle={{
+            fontSize: 15,
+            color: TEXT_PRIMARY,
+            paddingHorizontal: 12
+          }}
+          listItemContainerStyle={{
+            paddingVertical: 8
+          }}
+          listItemLabelStyle={{
+            fontSize: 15,
+            color: TEXT_PRIMARY,
+            paddingHorizontal: 12
+          }}
+          selectedItemLabelStyle={{
+            color: THEME_COLOR,
+            fontWeight: '600'
+          }}
+          listMode="SCROLLVIEW"
+          scrollViewProps={{
+            nestedScrollEnabled: true
+          }}
+          position="bottom"
+          maxHeight={120}
+          zIndex={2000}
         />
       </View>
     </View>
@@ -204,16 +246,7 @@ export default function menuUtama() {
         >
           <MaterialIcons name="arrow-back" size={24} color={TEXT_PRIMARY} />
         </TouchableOpacity>
-        <View style={styles.profileSection}>
-          <Image
-            source={{ uri: 'https://placekitten.com/100/100' }}
-            style={styles.profileImage}
-          />
-          <View style={styles.walletContainer}>
-            <MaterialIcons name="account-balance-wallet" size={16} color={THEME_COLOR} />
-            <Text style={styles.walletAmount}>RM 0.00</Text>
-          </View>
-        </View>
+        <Text style={styles.headerTitle}>Create Campaign</Text>
       </View>
 
       {/* Main Content */}
@@ -221,7 +254,6 @@ export default function menuUtama() {
         data={[1]} // Single item to render the content
         renderItem={() => (
           <>
-            <Text style={styles.pageTitle}>Create Campaign</Text>
             {renderContent()}
             <TouchableOpacity 
               style={styles.submitButton}
@@ -259,71 +291,38 @@ const styles = StyleSheet.create({
   },
   topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 48,
+    paddingHorizontal: 16,
+    paddingTop: 16,
     paddingBottom: 16,
-    paddingHorizontal: 8,
     backgroundColor: CARD_BACKGROUND,
     borderBottomWidth: 1,
     borderBottomColor: BORDER_COLOR,
+    marginBottom: 10,
+    marginHorizontal: -16,
   },
   backButton: {
     padding: 8,
     borderRadius: 8,
   },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: BORDER_COLOR,
-  },
-  walletContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: CARD_BACKGROUND,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: BORDER_COLOR,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  walletAmount: {
-    marginLeft: 6,
-    color: TEXT_PRIMARY,
-    fontSize: 14,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: '600',
-  },
-  pageTitle: {
-    fontSize: 26,
-    fontWeight: 'bold',
     color: TEXT_PRIMARY,
-    marginBottom: 16,
-    paddingHorizontal: 8,
-    marginTop: 16,
+    marginLeft: 8,
   },
   card: {
     backgroundColor: CARD_BACKGROUND,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
     marginHorizontal: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
+    zIndex: 1
   },
   formGroup: {
     marginBottom: 20,
@@ -381,32 +380,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
   },
-  dropdown: {
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-  },
-  dropdownContainer: {
-    backgroundColor: '#FFF0F3',
-    borderRadius: 12,
-    borderWidth: 0,
-    marginTop: 6,
-  },
-  placeholderStyle: {
-    fontSize: 15,
-    color: TEXT_SECONDARY,
-  },
-  dropdownText: {
-    fontSize: 15,
-    color: TEXT_PRIMARY,
-  },
-  dropdownItemText: {
-    fontSize: 15,
-    color: TEXT_PRIMARY,
-  },
-  selectedItemText: {
-    color: THEME_COLOR,
-    fontWeight: '600',
-  },
   submitButton: {
     backgroundColor: THEME_COLOR,
     padding: 16,
@@ -426,6 +399,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomSpacing: {
-    height: 40,
+    height: 20,
   },
 });
