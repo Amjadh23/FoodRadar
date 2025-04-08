@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, Modal, Image, ScrollView, Button } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, Modal, Image, FlatList, Button } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { db } from "./../config/firebase";
 import { collection, addDoc } from "firebase/firestore";
@@ -95,6 +95,102 @@ export default function menuUtama() {
     }
   };
 
+  const renderContent = () => (
+    <View style={styles.card}>
+      <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
+        <Text style={styles.label}>Campaign Title</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter a meaningful title"
+            value={title}
+            onChangeText={(text) => setTitle(text)}
+            placeholderTextColor={TEXT_SECONDARY}
+          />
+        </View>
+      </View>
+
+      <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
+        <Text style={styles.label}>Description</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Describe your campaign's purpose and goals"
+            value={description}
+            onChangeText={(text) => setDescription(text)}
+            multiline
+            numberOfLines={4}
+            placeholderTextColor={TEXT_SECONDARY}
+          />
+        </View>
+      </View>
+
+      <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
+        <Text style={styles.label}>Location Details</Text>
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter address"
+            value={address}
+            onChangeText={(text) => setAddress(text)}
+            placeholderTextColor={TEXT_SECONDARY}
+          />
+        </View>
+        <TouchableOpacity 
+          style={styles.locationButton}
+          onPress={() => setShowLocationPicker(true)}
+        >
+          <MaterialIcons name="location-on" size={20} color={THEME_COLOR} />
+          <Text style={styles.locationButtonText}>
+            {location ? `Selected: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` : "Pin on map"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
+        <Text style={styles.label}>Campaign Date</Text>
+        <TouchableOpacity 
+          style={styles.datePickerButton} 
+          onPress={() => setShowPicker(true)}
+        >
+          <Text style={styles.dateText}>
+            {date.toLocaleDateString()}
+          </Text>
+          <MaterialIcons name="calendar-today" size={20} color="#666" />
+        </TouchableOpacity>
+
+        {showPicker && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            onChange={onChange}
+            minimumDate={new Date()}
+          />
+        )}
+      </View>
+
+      <View style={[styles.formGroup, { zIndex: 2 }]}>
+        <Text style={styles.label}>Campaign Type</Text>
+        <DropDownPicker
+          open={open}
+          value={type}
+          items={items}
+          setOpen={setOpen}
+          setValue={setType}
+          setItems={setItems}
+          placeholder="Select type"
+          style={styles.dropdown}
+          dropDownContainerStyle={styles.dropdownContainer}
+          placeholderStyle={styles.placeholderStyle}
+          textStyle={styles.dropdownText}
+          listItemLabelStyle={styles.dropdownItemText}
+          selectedItemLabelStyle={styles.selectedItemText}
+          zIndex={1000}
+        />
+      </View>
+    </View>
+  );
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -121,112 +217,24 @@ export default function menuUtama() {
       </View>
 
       {/* Main Content */}
-      <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>Create Campaign</Text>
-        
-        <View style={styles.card}>
-          <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
-            <Text style={styles.label}>Campaign Title</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter a meaningful title"
-                value={title}
-                onChangeText={(text) => setTitle(text)}
-                placeholderTextColor={TEXT_SECONDARY}
-              />
-            </View>
-          </View>
-
-          <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
-            <Text style={styles.label}>Description</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Describe your campaign's purpose and goals"
-                value={description}
-                onChangeText={(text) => setDescription(text)}
-                multiline
-                numberOfLines={4}
-                placeholderTextColor={TEXT_SECONDARY}
-              />
-            </View>
-          </View>
-
-          <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
-            <Text style={styles.label}>Location Details</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter address"
-                value={address}
-                onChangeText={(text) => setAddress(text)}
-                placeholderTextColor={TEXT_SECONDARY}
-              />
-            </View>
+      <FlatList
+        data={[1]} // Single item to render the content
+        renderItem={() => (
+          <>
+            <Text style={styles.pageTitle}>Create Campaign</Text>
+            {renderContent()}
             <TouchableOpacity 
-              style={styles.locationButton}
-              onPress={() => setShowLocationPicker(true)}
+              style={styles.submitButton}
+              onPress={handleSubmit}
             >
-              <MaterialIcons name="location-on" size={20} color={THEME_COLOR} />
-              <Text style={styles.locationButtonText}>
-                {location ? `Selected: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` : "Pin on map"}
-              </Text>
+              <Text style={styles.submitButtonText}>Create Campaign</Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={[styles.formGroup, { zIndex: open ? 0 : 1 }]}>
-            <Text style={styles.label}>Campaign Date</Text>
-            <TouchableOpacity 
-              style={styles.datePickerButton} 
-              onPress={() => setShowPicker(true)}
-            >
-              <Text style={styles.dateText}>
-                {date.toLocaleDateString()}
-              </Text>
-              <MaterialIcons name="calendar-today" size={20} color="#666" />
-            </TouchableOpacity>
-
-            {showPicker && (
-              <DateTimePicker
-                value={date}
-                mode="date"
-                onChange={onChange}
-                minimumDate={new Date()}
-              />
-            )}
-          </View>
-
-          <View style={[styles.formGroup, { zIndex: 2 }]}>
-            <Text style={styles.label}>Campaign Type</Text>
-            <DropDownPicker
-              open={open}
-              value={type}
-              items={items}
-              setOpen={setOpen}
-              setValue={setType}
-              setItems={setItems}
-              placeholder="Select type"
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
-              placeholderStyle={styles.placeholderStyle}
-              textStyle={styles.dropdownText}
-              listItemLabelStyle={styles.dropdownItemText}
-              selectedItemLabelStyle={styles.selectedItemText}
-              zIndex={1000}
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.submitButton}
-          onPress={handleSubmit}
-        >
-          <Text style={styles.submitButtonText}>Create Campaign</Text>
-        </TouchableOpacity>
-        
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+            <View style={styles.bottomSpacing} />
+          </>
+        )}
+        keyExtractor={() => '1'}
+        showsVerticalScrollIndicator={false}
+      />
 
       <Modal
         visible={showLocationPicker}
