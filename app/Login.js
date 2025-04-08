@@ -60,8 +60,12 @@ export default function Login() {
         Alert.alert('Error', 'No user exist.');
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Ralat', error.message);
+      // Only show the user-friendly message, don't log the error
+      Alert.alert(
+        'Login Failed',
+        'The email or password you entered is incorrect. Please try again.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
