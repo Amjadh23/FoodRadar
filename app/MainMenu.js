@@ -41,18 +41,6 @@ export default function MainMenu() {
       description: 'Find nearby food distribution areas'
     },
     {
-      title: 'NGO Registration',
-      icon: <MaterialIcons name="people" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/NgoRegistration'),
-      description: 'Register your NGO organization'
-    },
-    {
-      title: 'Create Campaign',
-      icon: <MaterialIcons name="campaign" size={32} color="#FF6B8B" />,
-      onPress: () => router.push('/MenuUtama'),
-      description: 'Create a new food distribution campaign'
-    },
-    {
       title: 'Dashboard',
       icon: <MaterialIcons name="dashboard" size={32} color="#FF6B8B" />,
       onPress: () => router.push('/dashboard'),

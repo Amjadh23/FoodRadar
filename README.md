@@ -19,9 +19,8 @@ An AI-powered platform tackling Zero Hunger (SDG 2) and No Poverty (SDG 1) by co
    Install the required packages by running:
    ```bash
    npm install
-   npm install react-native-maps expo-location @expo/vector-icons
-   npm install @react-native-community/datetimepicker
-   npm install lodash
+   npm install react-native-maps expo-location @expo/vector-icons @react-native-community/datetimepicker lodash
+   npx expo install @react-native-community/datetimepicker
 
 4. **Install Expo CLI**
    ```bash
