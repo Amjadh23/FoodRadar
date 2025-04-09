@@ -176,7 +176,12 @@ export default function MapScreen() {
     // Set selected campaign
     const now = new Date();
     const campaignDate = campaign.selectDate ? campaign.selectDate.toDate() : null;
-    const isExpired = campaignDate ? campaignDate < now : false;
+    
+    // Only consider a campaign expired if it's from a previous day
+    const isExpired = campaignDate ? 
+      campaignDate.getDate() < now.getDate() || 
+      campaignDate.getMonth() < now.getMonth() || 
+      campaignDate.getFullYear() < now.getFullYear() : false;
     
     setSelectedCampaign({
       ...campaign,
@@ -216,13 +221,8 @@ export default function MapScreen() {
         destination: end,
       });
       
-      // Fit map to show route with more padding for better visibility
-      if (mapRef.current) {
-        mapRef.current.fitToCoordinates(coordinates, {
-          edgePadding: { top: 150, right: 150, bottom: 150, left: 150 },
-          animated: true
-        });
-      }
+      // Remove the automatic map fitting to coordinates
+      // This will keep the map static at its current position
     }
   };
 
@@ -313,7 +313,7 @@ export default function MapScreen() {
             provider={PROVIDER_OSM}
             style={styles.map}
             initialRegion={{
-              latitude: location?.latitude || 3.139003, // Default to KL coordinates if location not available yet
+              latitude: location?.latitude || 3.139003,
               longitude: location?.longitude || 101.686855,
               latitudeDelta: 0.002,
               longitudeDelta: 0.002,
@@ -331,6 +331,10 @@ export default function MapScreen() {
                 });
               }
             }}
+            onMarkerPress={(e) => {
+              // Prevent default marker press behavior
+              e.stopPropagation();
+            }}
           >
             {location && (
               <>
@@ -340,14 +344,6 @@ export default function MapScreen() {
                     <MaterialIcons name="location-pin" size={36} color="#FF6B8B" />
                   </View>
                 </Marker>
-
-                {/* 500m Radius Circle */}
-                <Circle
-                  center={{ latitude: location.latitude, longitude: location.longitude }}
-                  radius={500}
-                  strokeColor="rgba(255, 107, 139, 0.3)"
-                  fillColor="rgba(255, 107, 139, 0.1)"
-                />
               </>
             )}
 
@@ -566,13 +562,14 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { 
     flex: 1,
-    backgroundColor: '#fff' 
+    backgroundColor: '#fff',
+    margin: 0,
+    padding: 0
   },
   map: { 
     flex: 1,
-    borderRadius: 20,
-    margin: 16,
-    overflow: 'hidden'
+    width: '100%',
+    height: '100%'
   },
   loader: { 
     flex: 1, 
