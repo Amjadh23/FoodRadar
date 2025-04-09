@@ -65,7 +65,7 @@ export default function Dashboard() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
+        <Text style={styles.headerTitle}>All Campaigns</Text>
       </View>
 
       <ScrollView 

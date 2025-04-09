@@ -41,10 +41,10 @@ export default function MainMenu() {
       description: 'Find nearby food distribution areas'
     },
     {
-      title: 'Dashboard',
+      title: 'All Campaigns',
       icon: <MaterialIcons name="dashboard" size={32} color="#FF6B8B" />,
       onPress: () => router.push('/dashboard'),
-      description: 'View your campaigns and statistics'
+      description: 'View all campaigns registered by NGOs'
     },
     {
       title: 'Chatbot',

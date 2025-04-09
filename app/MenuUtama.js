@@ -27,8 +27,9 @@ export default function menuUtama() {
   const [open, setOpen] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [items, setItems] = useState([
-    { label: "Infaq", value: "infaq" },
-    { label: "Sumbangan", value: "sumbangan" },
+    { label: "Food Donation (Infaq)", value: "infaq" },
+    { label: "Charity Distribution (Sumbangan)", value: "sumbangan" },
+    { label: "Other", value: "other" },
   ]);
 
   const [date, setDate] = useState(new Date());

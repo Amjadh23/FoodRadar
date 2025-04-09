@@ -174,7 +174,14 @@ export default function MapScreen() {
     if (!location) return;
     
     // Set selected campaign
-    setSelectedCampaign(campaign);
+    const now = new Date();
+    const campaignDate = campaign.selectDate ? campaign.selectDate.toDate() : null;
+    const isExpired = campaignDate ? campaignDate < now : false;
+    
+    setSelectedCampaign({
+      ...campaign,
+      status: isExpired ? 'expired' : 'active'
+    });
     setIsBottomSheetExpanded(false);
     
     // Calculate distance in kilometers
@@ -453,7 +460,7 @@ export default function MapScreen() {
                           styles.statusText,
                           { color: selectedCampaign.status === 'active' ? '#4CAF50' : '#FF6B8B' }
                         ]}>
-                          {selectedCampaign.status === 'active' ? '● Active' : '● Inactive'}
+                          {selectedCampaign.status === 'active' ? '● Active' : '● Expired'}
                         </Text>
                       </View>
                     )}
@@ -476,12 +483,12 @@ export default function MapScreen() {
                       </View>
                     </View>
 
-                    {selectedCampaign.createdAt && (
+                    {selectedCampaign.selectDate && (
                       <View style={styles.infoRow}>
                         <MaterialIcons name="event" size={24} color="#FF6B8B" />
                         <View style={styles.infoContent}>
-                          <Text style={styles.infoLabel}>Created On</Text>
-                          <Text style={styles.infoValue}>{formatDate(selectedCampaign.createdAt)}</Text>
+                          <Text style={styles.infoLabel}>Date</Text>
+                          <Text style={styles.infoValue}>{formatDate(selectedCampaign.selectDate)}</Text>
                         </View>
                       </View>
                     )}
