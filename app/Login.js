@@ -14,6 +14,7 @@ import { Link, useRouter } from 'expo-router';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from './../config/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -75,8 +76,16 @@ export default function Login() {
       style={styles.container}
     >
       <View style={styles.loginContainer}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoIconContainer}>
+            <MaterialIcons name="restaurant" size={48} color="#FF6B8B" />
+          </View>
+          <Text style={styles.logoText}>
+            Food<Text style={{ color: '#FF6B8B' }}>Radar</Text>
+          </Text>
+        </View>
 
-        <Text style={styles.title}>Login</Text>
+        <Text style={styles.subtitle}>Connect with food distribution points</Text>
 
         {inputFields.map((field) => (
           <TextInput
@@ -95,7 +104,7 @@ export default function Login() {
         </Pressable>
 
         <Text style={styles.registerText}>
-        Want to register your NGO?{' '}
+          Want to register your NGO?{' '}
           <Link href="/NgoRegistration">
             <Text style={styles.link}>Register NGO</Text>
           </Link>
@@ -121,6 +130,36 @@ const styles = StyleSheet.create({
   },
   loginContainer: {
     width: '100%',
+    alignItems: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  logoIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FFF0F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  logoText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#333',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 32,
+    textAlign: 'center',
   },
   title: {
     fontSize: 28,
@@ -130,11 +169,13 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    width: '100%',
+    borderColor: '#FF6B8B',
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 15,
+    backgroundColor: '#FFF0F3',
   },
   button: {
     backgroundColor: '#FF6B8B',
@@ -142,17 +183,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 10,
+    width: '100%',
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   registerText: {
     textAlign: 'center',
     marginTop: 10,
+    color: '#666',
   },
   link: {
-    color: '#007AFF',
+    color: '#FF6B8B',
     fontWeight: '500',
   },
 });
