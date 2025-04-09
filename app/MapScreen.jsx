@@ -825,6 +825,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    bottom: 0,
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
@@ -835,14 +836,13 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
   bottomSheetCollapsed: {
-    bottom: -5, // Slightly visible to show there's more content
-    height: 5,
+    height: 0,
   },
   bottomSheetExpanded: {
-    bottom: 0,
-    maxHeight: '60%',
+    height: '60%',
   },
   bottomSheetContent: {
+    flex: 1,
     padding: 16,
   },
   handleContainer: {
