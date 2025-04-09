@@ -8,6 +8,7 @@ import { collection, getDocs } from "firebase/firestore";
 export default function Dashboard() {
   const [listKempen, setListKempen] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [totalNGOs, setTotalNGOs] = useState(0);
   const router = useRouter();
 
   const fetchCampaigns = async () => {
@@ -35,32 +36,36 @@ export default function Dashboard() {
     }
   };
 
+  const fetchTotalNGOs = async () => {
+    try {
+      const ref = collection(db, "User");
+      const result = await getDocs(ref);
+      const ngoCount = result.docs.filter(doc => doc.data().role === "ngo").length;
+      setTotalNGOs(ngoCount);
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+
   useEffect(() => {
     fetchCampaigns();
+    fetchTotalNGOs();
   }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    fetchCampaigns().finally(() => setRefreshing(false));
+    Promise.all([fetchCampaigns(), fetchTotalNGOs()]).finally(() => setRefreshing(false));
   }, []);
 
   const stats = [
     { title: 'Active Campaigns', value: listKempen.length, icon: 'campaign', color: '#4CAF50' },
-    { title: 'Total Donations', value: 'RM 5,000', icon: 'attach-money', color: '#FF9800' },
-    { title: 'Beneficiaries', value: '150+', icon: 'people', color: '#2196F3' },
-    { title: 'NGO Partners', value: '12', icon: 'business', color: '#9C27B0' },
+    { title: 'NGO Partners', value: totalNGOs, icon: 'business', color: '#9C27B0' },
   ];
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={() => router.push('/menuUtama')}
-        >
-          <MaterialIcons name="add" size={24} color="#fff" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView 
@@ -84,17 +89,13 @@ export default function Dashboard() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Active Campaigns</Text>
-            <TouchableOpacity onPress={() => router.push('/NearbyCampaigns')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
           </View>
 
           {listKempen.length > 0 ? (
             listKempen.map((kempen) => (
-              <TouchableOpacity 
+              <View 
                 key={kempen.id} 
                 style={styles.campaignCard}
-                onPress={() => router.push({ pathname: "/CampaignDetails", params: { id: kempen.id } })}
               >
                 <View style={styles.campaignHeader}>
                   <MaterialIcons name="campaign" size={24} color="#4CAF50" />
@@ -136,7 +137,7 @@ export default function Dashboard() {
                   </View>
                   {/* <Text style={styles.dateText}>Created: {new Date(kempen.createdAt?.toDate()).toLocaleDateString()}</Text> */}
                 </View>
-              </TouchableOpacity>
+              </View>
             ))
           ) : (
             <View style={styles.emptyState}>
@@ -173,19 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#FF6B8B',
-  },
-  addButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#FF6B8B',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   scrollView: {
     flex: 1,
@@ -241,11 +229,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: '#333',
-  },
-  seeAll: {
-    color: '#FF6B8B',
-    fontSize: 16,
-    fontWeight: '500',
   },
   campaignCard: {
     backgroundColor: '#fff',
