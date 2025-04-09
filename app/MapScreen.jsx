@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Text, ScrollView, Animated } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Text, ScrollView, Animated, PanResponder } from "react-native";
 import MapView, { Marker, Circle, PROVIDER_OSM, Callout, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import { MaterialIcons, FontAwesome5, Ionicons } from "@expo/vector-icons";
@@ -20,6 +20,40 @@ export default function MapScreen() {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const mapRef = useRef(null);
   const router = useRouter();
+  const pan = useRef(new Animated.ValueXY()).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to vertical gestures
+        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+      },
+      onPanResponderGrant: () => {
+        pan.setOffset({
+          x: pan.x._value,
+          y: pan.y._value
+        });
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Only allow downward movement
+        if (gestureState.dy > 0) {
+          pan.setValue({ x: 0, y: gestureState.dy });
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        pan.flattenOffset();
+        // If dragged down more than 100 units, close the bottom sheet
+        if (gestureState.dy > 100) {
+          setIsBottomSheetExpanded(false);
+          clearRoute();
+        }
+        // Reset the position
+        Animated.spring(pan, {
+          toValue: { x: 0, y: 0 },
+          useNativeDriver: true,
+        }).start();
+      },
+    })
+  ).current;
 
   // Add hardcoded test campaigns
   const testCampaigns = [
@@ -173,6 +207,15 @@ export default function MapScreen() {
   const showRoute = async (campaign) => {
     if (!location) return;
     
+    // If clicking the same campaign, toggle the bottom sheet and clear route
+    if (selectedCampaign?.id === campaign.id) {
+      setIsBottomSheetExpanded(!isBottomSheetExpanded);
+      if (isBottomSheetExpanded) {
+        clearRoute();
+      }
+      return;
+    }
+    
     // Set selected campaign
     const now = new Date();
     const campaignDate = campaign.selectDate ? campaign.selectDate.toDate() : null;
@@ -187,7 +230,7 @@ export default function MapScreen() {
       ...campaign,
       status: isExpired ? 'expired' : 'active'
     });
-    setIsBottomSheetExpanded(false);
+    setIsBottomSheetExpanded(true);
     
     // Calculate distance in kilometers
     const distance = calculateDistance(
@@ -220,9 +263,6 @@ export default function MapScreen() {
         origin: start,
         destination: end,
       });
-      
-      // Remove the automatic map fitting to coordinates
-      // This will keep the map static at its current position
     }
   };
 
@@ -416,32 +456,31 @@ export default function MapScreen() {
                   <MaterialIcons name="access-time" size={20} color="#FF6B8B" />
                   <Text style={styles.routeInfoValue}>{estimatedTime}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={styles.expandButton} 
-                  onPress={toggleBottomSheet}
-                >
-                  <Ionicons 
-                    name={isBottomSheetExpanded ? "chevron-down" : "chevron-up"} 
-                    size={20} 
-                    color="#FF6B8B" 
-                  />
-                </TouchableOpacity>
               </View>
             </View>
           )}
 
           {/* Bottom Sheet for Campaign Details (Expandable) */}
           {selectedCampaign && (
-            <View style={[
-              styles.bottomSheet, 
-              isBottomSheetExpanded ? styles.bottomSheetExpanded : styles.bottomSheetCollapsed
-            ]}>
+            <Animated.View 
+              style={[
+                styles.bottomSheet, 
+                isBottomSheetExpanded ? styles.bottomSheetExpanded : styles.bottomSheetCollapsed,
+                {
+                  transform: [{ translateY: pan.y }]
+                }
+              ]}
+            >
+              <View style={styles.handleContainer} {...panResponder.panHandlers}>
+                <View style={styles.handle} />
+              </View>
+              
               {isBottomSheetExpanded && (
-                <ScrollView style={styles.bottomSheetContent}>
-                  <View style={styles.handleContainer}>
-                    <View style={styles.handle} />
-                  </View>
-                  
+                <ScrollView 
+                  style={styles.bottomSheetContent}
+                  scrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
                   <View style={styles.campaignHeader}>
                     <View style={styles.campaignIconLarge}>
                       {getCampaignIcon(selectedCampaign.type)}
@@ -508,7 +547,7 @@ export default function MapScreen() {
                   </TouchableOpacity>
                 </ScrollView>
               )}
-            </View>
+            </Animated.View>
           )}
 
           {/* Replace the existing legend with this new button and conditional legend */}
@@ -750,26 +789,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-  routeInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  routeInfoItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  routeInfoLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginVertical: 4,
-  },
-  routeInfoValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FF6B8B',
-  },
-  campaignCard: {
+  routeCardSmall: {
+    position: 'absolute',
+    top: 32,
+    left: 16,
+    right: 16,
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
@@ -778,88 +802,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    maxHeight: 350,
+    alignItems: 'center',
   },
-  campaignCardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  campaignTypeContainer: {
+  routeInfoContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF0F3',
-    padding: 8,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  campaignTypeText: {
-    marginLeft: 8,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FF6B8B',
-  },
-  detailRow: {
-    marginBottom: 8,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  detailLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 2,
-  },
-  detailValue: {
-    fontSize: 14,
-    color: '#333',
-  },
-  statusContainer: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    padding: 4,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  clearButton: {
-    backgroundColor: '#FFF0F3',
-    padding: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    color: '#FF6B8B',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  routeCardSmall: {
-    position: 'absolute',
-    top: 32,
-    left: 16,
-    right: 16,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 12,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  expandButton: {
-    backgroundColor: '#FFF0F3',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
+  },
+  routeInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  routeInfoValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF6B8B',
+    marginLeft: 8,
   },
   bottomSheet: {
     position: 'absolute',
@@ -926,6 +886,10 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 16,
     marginTop: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   infoSection: {
     paddingHorizontal: 16,
